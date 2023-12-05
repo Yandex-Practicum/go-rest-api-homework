@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -39,14 +40,103 @@ var tasks = map[string]Task{
 	},
 }
 
-// Ниже напишите обработчики для каждого эндпоинта
-// ...
+/*
+- Конечная точка /tasks.
+- Метод GET.
+- При успешном запросе сервер должен вернуть статус 200 OK.
+- При ошибке сервер должен вернуть статус 500 Internal Server Error.
+*/
+func getTasks(w http.ResponseWriter, r *http.Request) {
+	resp, err := json.Marshal(tasks)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	_, err = w.Write(resp)
+	if err != nil {
+		fmt.Printf("Ошибка записи: %v", err)
+	}
+}
+
+/*
+- Конечная точка `/tasks/{id}`.
+- Метод `GET`.
+- При успешном выполнении запроса сервер должен вернуть статус `200 OK`.
+- В случае ошибки или отсутствия задачи в мапе сервер должен вернуть статус `400 Bad Request`.
+*/
+func getTaskById(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	task, ok := tasks[id]
+	if !ok {
+		http.Error(w, "Задача не найдена", http.StatusBadRequest)
+		return
+	}
+
+	resp, err := json.Marshal(task)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	_, err = w.Write(resp)
+	if err != nil {
+		fmt.Printf("Ошибка записи: %v", err)
+	}
+}
+
+/*
+- Конечная точка `/tasks`.
+- Метод `POST`.
+- При успешном запросе сервер должен вернуть статус `201 Created`.
+- При ошибке сервер должен вернуть статус `400 Bad Request`.
+*/
+func createTask(w http.ResponseWriter, r *http.Request) {
+	var task Task
+	err := json.NewDecoder(r.Body).Decode(&task)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	tasks[task.ID] = task
+	//
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+}
+
+/*
+- Конечная точка `/tasks/{id}`.
+- Метод `DELETE`.
+- При успешном выполнении запроса сервер должен вернуть статус `200 OK`.
+- В случае ошибки или отсутствия задачи в мапе сервер должен вернуть статус `400 Bad Request`.
+*/
+func deleteTask(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	//
+	_, ok := tasks[id]
+	if !ok {
+		http.Error(w, "Задача не найдена", http.StatusBadRequest)
+		return
+	}
+	delete(tasks, id)
+	//
+	w.WriteHeader(http.StatusOK)
+}
 
 func main() {
 	r := chi.NewRouter()
 
 	// здесь регистрируйте ваши обработчики
-	// ...
+	r.Get("/tasks", getTasks)
+	r.Get("/tasks/{id}", getTaskById)
+	//
+	r.Post("/tasks", createTask)
+	r.Delete("/tasks/{id}", deleteTask)
 
 	if err := http.ListenAndServe(":8080", r); err != nil {
 		fmt.Printf("Ошибка при запуске сервера: %s", err.Error())
