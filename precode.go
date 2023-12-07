@@ -57,6 +57,7 @@ func getTasks(w http.ResponseWriter, r *http.Request) {
 
 	_, err = w.Write(resp)
 	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		fmt.Printf("Ошибка записи: %v", err)
 	}
 }
@@ -86,6 +87,7 @@ func getTaskById(w http.ResponseWriter, r *http.Request) {
 
 	_, err = w.Write(resp)
 	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		fmt.Printf("Ошибка записи: %v", err)
 	}
 }
@@ -104,7 +106,6 @@ func createTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	tasks[task.ID] = task
-	//
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 }
@@ -117,24 +118,21 @@ func createTask(w http.ResponseWriter, r *http.Request) {
 */
 func deleteTask(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	//
 	_, ok := tasks[id]
 	if !ok {
 		http.Error(w, "Задача не найдена", http.StatusBadRequest)
 		return
 	}
 	delete(tasks, id)
-	//
 	w.WriteHeader(http.StatusOK)
 }
 
 func main() {
 	r := chi.NewRouter()
 
-	// здесь регистрируйте ваши обработчики
+	// регистрируем обработчики
 	r.Get("/tasks", getTasks)
 	r.Get("/tasks/{id}", getTaskById)
-	//
 	r.Post("/tasks", createTask)
 	r.Delete("/tasks/{id}", deleteTask)
 
