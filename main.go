@@ -91,7 +91,7 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 	task, ok := tasks[id]
 
 	if !ok {
-		err := fmt.Errorf("не найдена задача с id = %s", id)
+		err := fmt.Errorf("not found task with id = %s", id)
 		fmt.Println(err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -116,7 +116,7 @@ func deleteTask(w http.ResponseWriter, r *http.Request) {
 	_, ok := tasks[id]
 
 	if !ok {
-		err := fmt.Errorf("не найдена задача с id = %s", id)
+		err := fmt.Errorf("not found task with id = %s", id)
 		fmt.Println(err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
