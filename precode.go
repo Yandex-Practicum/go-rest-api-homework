@@ -114,7 +114,7 @@ func deleteTask(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	r := chi.NewRouter()
-
+	//r.Use(Logger)
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 
 		w.Write([]byte("MY TODO"))
