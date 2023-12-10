@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -40,7 +42,42 @@ var tasks = map[string]Task{
 }
 
 // Ниже напишите обработчики для каждого эндпоинта
-// ...
+func getTasks(w http.ResponseWriter, r *http.Request) {
+	resp, err := json.Marshal(tasks)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "aplication/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(resp)
+}
+
+func postTask(w http.ResponseWriter, r *http.Request) {
+	var task Task
+	var buf bytes.Buffer
+
+	_, err := buf.ReadFrom(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = json.Unmarshal(buf.Bytes(), &task)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	tasks[task.ID] = task
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+}
+
+func getTask(w http.ResponseWriter, r *http.Request) {
+
+}
 
 func main() {
 	r := chi.NewRouter()
