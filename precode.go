@@ -28,7 +28,7 @@ var tasks = map[string]Task{
 	},
 	"2": {
 		ID:          "2",
-		Description: "Протестировать финальное задание с помощью Postmen",
+		Description: "Протестировать финальное задание с помощью Postman",
 		Note:        "Лучше это делать в процессе разработки, каждый раз, когда запускаешь сервер и проверяешь хендлер",
 		Applications: []string{
 			"VS Code",
@@ -45,11 +45,16 @@ var tasks = map[string]Task{
 func main() {
 	r := chi.NewRouter()
 
-	// здесь регистрируйте ваши обработчики
-	// ...
+	r.Get("/tasks", getAllTasksHandler)
+	r.Post("/tasks", createTaskHandler)
+	r.Get("/tasks/{id}", getTaskByIDHandler)
+	r.Delete("/tasks/{id}", deleteTaskByIDHandler)
 
-	if err := http.ListenAndServe(":8080", r); err != nil {
-		fmt.Printf("Ошибка при запуске сервера: %s", err.Error())
+	port := ":8080"
+	fmt.Printf("Сервер запущен на порту %s\n", port)
+
+	if err := http.ListenAndServe(port, r); err != nil {
+		fmt.Printf("Ошибка при запуске сервера: %s\n", err.Error())
 		return
 	}
 }
