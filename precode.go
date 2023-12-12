@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -39,8 +40,52 @@ var tasks = map[string]Task{
 	},
 }
 
-// Ниже напишите обработчики для каждого эндпоинта
-// ...
+func getAllTasksHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(tasks)
+}
+
+func createTaskHandler(w http.ResponseWriter, r *http.Request) {
+	var newTask Task
+	err := json.NewDecoder(r.Body).Decode(&newTask)
+	if err != nil {
+		http.Error(w, "Ошибка при декодировании JSON", http.StatusBadRequest)
+		return
+	}
+
+	newTask.ID = fmt.Sprint(len(tasks) + 1)
+
+	tasks[newTask.ID] = newTask
+
+	w.WriteHeader(http.StatusCreated)
+}
+
+func getTaskByIDHandler(w http.ResponseWriter, r *http.Request) {
+	taskID := chi.URLParam(r, "id")
+
+	task, ok := tasks[taskID]
+	if !ok {
+		http.Error(w, "Задача не найдена", http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(task)
+}
+
+func deleteTaskByIDHandler(w http.ResponseWriter, r *http.Request) {
+	taskID := chi.URLParam(r, "id")
+
+	_, ok := tasks[taskID]
+	if !ok {
+		http.Error(w, "Задача не найдена", http.StatusBadRequest)
+		return
+	}
+
+	delete(tasks, taskID)
+
+	w.WriteHeader(http.StatusOK)
+}
 
 func main() {
 	r := chi.NewRouter()
