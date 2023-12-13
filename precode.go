@@ -1,13 +1,13 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
-	"net/http"
-
 	"github.com/go-chi/chi/v5"
+	"net/http"
 )
 
-// Task ...
 type Task struct {
 	ID           string   `json:"id"`
 	Description  string   `json:"description"`
@@ -39,16 +39,84 @@ var tasks = map[string]Task{
 	},
 }
 
-// Ниже напишите обработчики для каждого эндпоинта
-// ...
+func getTasks(write http.ResponseWriter, read *http.Request) {
+
+	response, err := json.Marshal(tasks)
+
+	if err != nil {
+		http.Error(write, err.Error(), 500)
+		return
+	}
+
+	write.Header().Set("Content-Type", "application/json")
+	write.WriteHeader(200)
+	write.Write(response)
+}
+
+func postTask(write http.ResponseWriter, read *http.Request) {
+	var newTask Task
+	var buf bytes.Buffer
+	_, err := buf.ReadFrom(read.Body)
+
+	if err != nil {
+		http.Error(write, err.Error(), 400)
+		return
+	}
+
+	if err = json.Unmarshal(buf.Bytes(), &newTask); err != nil {
+		http.Error(write, err.Error(), 400)
+		return
+	}
+
+	tasks[newTask.ID] = newTask
+
+	write.Header().Set("Content-Type", "application/json")
+	write.WriteHeader(201)
+}
+
+func getTaskById(write http.ResponseWriter, read *http.Request) {
+	id := chi.URLParam(read, "id")
+	task, ok := tasks[id]
+
+	if !ok {
+		http.Error(write, "400 Bad Request", 400)
+		return
+	}
+
+	response, err := json.Marshal(task)
+
+	if err != nil {
+		http.Error(write, err.Error(), 400)
+		return
+	}
+
+	write.Header().Set("Content-Type", "application/json")
+	write.WriteHeader(200)
+	write.Write(response)
+}
+
+func deleteTaskById(write http.ResponseWriter, read *http.Request) {
+	id := chi.URLParam(read, "id")
+	_, ok := tasks[id]
+
+	if !ok {
+		http.Error(write, "400 Bad Request", 400)
+		return
+	}
+
+	delete(tasks, id)
+	write.WriteHeader(200)
+}
 
 func main() {
-	r := chi.NewRouter()
-
 	// здесь регистрируйте ваши обработчики
-	// ...
+	read := chi.NewRouter()
+	read.Get("/tasks/{id}", getTaskById)
+	read.Get("/tasks", getTasks)
+	read.Post("/tasks", postTask)
+	read.Delete("/tasks/{id}", deleteTaskById)
 
-	if err := http.ListenAndServe(":8080", r); err != nil {
+	if err := http.ListenAndServe(":8080", read); err != nil {
 		fmt.Printf("Ошибка при запуске сервера: %s", err.Error())
 		return
 	}
