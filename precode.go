@@ -42,7 +42,11 @@ var tasks = map[string]Task{
 
 func getAllTasksHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(tasks)
+	err := json.NewEncoder(w).Encode(tasks)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func createTaskHandler(w http.ResponseWriter, r *http.Request) {
@@ -70,7 +74,11 @@ func getTaskByIDHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(task)
+	err := json.NewEncoder(w).Encode(task)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func deleteTaskByIDHandler(w http.ResponseWriter, r *http.Request) {
