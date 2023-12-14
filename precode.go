@@ -54,6 +54,7 @@ func GetTasks(w http.ResponseWriter, r *http.Request) {
 func CreateTask(w http.ResponseWriter, r *http.Request) {
 	var newTask Task
 	if err := json.NewDecoder(r.Body).Decode(&newTask); err != nil {
+		fmt.Println("Произошла ошибка:", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
