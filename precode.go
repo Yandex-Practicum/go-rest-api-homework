@@ -48,13 +48,17 @@ func GetTasks(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(tasksList)
+
+	if err := json.NewEncoder(w).Encode(tasksList); err != nil {
+		fmt.Println("Ошибка при сериализации:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 }
 
 func CreateTask(w http.ResponseWriter, r *http.Request) {
 	var newTask Task
 	if err := json.NewDecoder(r.Body).Decode(&newTask); err != nil {
-		fmt.Println("Произошла ошибка:", err)
+		fmt.Println("Ошибка при декодировании JSON:", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -65,7 +69,11 @@ func CreateTask(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(newTask)
+
+	if err := json.NewEncoder(w).Encode(newTask); err != nil {
+		fmt.Println("Ошибка при сериализации:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 }
 
 func GetTaskByID(w http.ResponseWriter, r *http.Request) {
@@ -78,7 +86,11 @@ func GetTaskByID(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(task)
+
+	if err := json.NewEncoder(w).Encode(task); err != nil {
+		fmt.Println("Ошибка при сериализации:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 }
 
 func DeleteTaskByID(w http.ResponseWriter, r *http.Request) {
