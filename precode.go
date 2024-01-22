@@ -47,7 +47,6 @@ func getALLTasks(w http.ResponseWriter, r *http.Request) {
 	response, err := json.Marshal(tasks)
 	if err != nil {
 		log.Printf("Ошибка json.Marshal: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -55,7 +54,6 @@ func getALLTasks(w http.ResponseWriter, r *http.Request) {
 	_, err = w.Write(response)
 	if err != nil {
 		log.Printf("Ошибка w.Write(response): %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
@@ -65,7 +63,6 @@ func postTasks(w http.ResponseWriter, r *http.Request) {
 	err := dec.Decode(&postTask)
 	if err != nil {
 		log.Printf("Ошибка dec.Decode: %v", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	tasks[postTask.ID] = postTask
@@ -77,13 +74,11 @@ func getTasksId(w http.ResponseWriter, r *http.Request) {
 	findedTask, ok := tasks[id]
 	if !ok {
 		log.Print("Ошибка task не найден")
-		http.Error(w, "getTasksId: task не найден", http.StatusBadRequest)
 		return
 	}
 	response, err := json.Marshal(findedTask)
 	if err != nil {
 		log.Printf("Ошибка json.Marshal: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -91,7 +86,6 @@ func getTasksId(w http.ResponseWriter, r *http.Request) {
 	_, err = w.Write(response)
 	if err != nil {
 		log.Printf("Ошибка w.Write(response): %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
@@ -100,7 +94,6 @@ func deleteTasksId(w http.ResponseWriter, r *http.Request) {
 	findedTask, ok := tasks[id]
 	if !ok {
 		log.Print("Ошибка task не найден")
-		http.Error(w, "getTasksId: task не найден", http.StatusBadRequest)
 		return
 	}
 	delete(tasks, findedTask.ID)
@@ -116,11 +109,11 @@ func main() {
 	//Обработчик для получения всех задач
 	r.Get("/tasks", getALLTasks)
 	//Обработчик для отправки задачи на сервер
-	r.Get("/tasks", postTasks)
+	r.Post("/tasks", postTasks)
 	//Обработчик для получения задачи по ID
 	r.Get("/tasks/{id}", getTasksId)
 	//Обработчик удаления задачи по ID
-	r.Get("/tasks/{id}", deleteTasksId)
+	r.Delete("/tasks/{id}", deleteTasksId)
 	if err := http.ListenAndServe(":8080", r); err != nil {
 		fmt.Printf("Ошибка при запуске сервера: %s", err.Error())
 		return
