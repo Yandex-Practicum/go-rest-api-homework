@@ -74,9 +74,7 @@ func postTasks(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
 	tasks[task.ID] = task
-
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 }
@@ -103,21 +101,19 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 // Обработчик удаления задачи из Мапы
 func deleteTask(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id") //получили id
-
 	task, ok := tasks[id]
 	if !ok {
 		http.Error(w, "Задача не найдена", http.StatusNoContent)
 		return
 	}
-	//delete(m, k)  //  удалить элемент m[k] из карты m
-	delete(tasks, id)
 
+	// Удаляем из Мапы элемент по ID
+	delete(tasks, id)
 	resp, err := json.Marshal(task)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	fmt.Println("элемент ", id, "удален")
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(resp)
@@ -138,7 +134,7 @@ func main() {
 	r.Get("/task/{id}", getTask)
 
 	// Регистрируем обработчик удаления задачи по ID
-	r.Get("/tasks/{id}", deleteTask)
+	r.Delete("/tasks/{id}", deleteTask)
 
 	if err := http.ListenAndServe(":8080", r); err != nil {
 		fmt.Printf("Ошибка при запуске сервера: %s", err.Error())
