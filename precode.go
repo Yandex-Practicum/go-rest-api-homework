@@ -60,16 +60,17 @@ func postTasks(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	fmt.Println(buf.Bytes())
 	if err = json.Unmarshal(buf.Bytes(), &task); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	tasks[task.ID] = task
+	s := fmt.Sprintf("Добавлена новая задача!")
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
+	w.Write([]byte(s))
 }
 
 func getTask(w http.ResponseWriter, r *http.Request) {
