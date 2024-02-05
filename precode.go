@@ -52,7 +52,12 @@ func getTasks(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 
-	w.Write(resp)
+	bytesWritten, err := w.Write(resp)
+	if err != nil {
+		panic(err)
+		return
+	}
+	fmt.Printf("Bytes written: %d\n", bytesWritten)
 }
 
 func postTask(w http.ResponseWriter, r *http.Request) {
@@ -72,6 +77,11 @@ func postTask(w http.ResponseWriter, r *http.Request) {
 
 	if task.ID == "" {
 		http.Error(w, "ID cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	if _, ok := tasks[task.ID]; ok {
+		http.Error(w, "ID is exist", http.StatusBadRequest)
 		return
 	}
 
@@ -107,13 +117,20 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := json.Marshal(task)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+
 	w.WriteHeader(http.StatusOK)
-	w.Write(resp)
+
+	bytesWritten, err := w.Write(resp)
+	if err != nil {
+		panic(err)
+		return
+	}
+	fmt.Printf("Bytes written: %d\n", bytesWritten)
 }
 
 func main() {
