@@ -74,6 +74,25 @@ func addTask(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
+func getOneTask(w http.ResponseWriter, req *http.Request) {
+	id := chi.URLParam(req, "id")
+
+	task, ok := tasks[id]
+	if !ok {
+		http.Error(w, "Task not found", http.StatusNoContent)
+		return
+	}
+
+	resp, err := json.Marshal(task)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(resp)
+}
+
 func main() {
 	r := chi.NewRouter()
 
