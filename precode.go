@@ -46,7 +46,10 @@ func main() {
 	r := chi.NewRouter()
 
 	// здесь регистрируйте ваши обработчики
-	// ...
+	r.Get("/tasks", getTasks)
+	r.Post("/tasks", addTask)
+	r.Get("/tasks/{id}", getOneTask)
+	r.Delete("/tasks/{id}", delTask)
 
 	if err := http.ListenAndServe(":8080", r); err != nil {
 		fmt.Printf("Ошибка при запуске сервера: %s", err.Error())
