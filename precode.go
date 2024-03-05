@@ -79,7 +79,7 @@ func getOneTask(w http.ResponseWriter, req *http.Request) {
 
 	task, ok := tasks[id]
 	if !ok {
-		http.Error(w, "Task not found", http.StatusNoContent)
+		http.Error(w, "Task for get not found", http.StatusNoContent)
 		return
 	}
 
@@ -91,6 +91,20 @@ func getOneTask(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(resp)
+}
+
+func delTask(w http.ResponseWriter, req *http.Request) {
+	id := chi.URLParam(req, "id")
+
+	task, ok := tasks[id]
+	if !ok {
+		http.Error(w, "Task for delete not found", http.StatusNoContent)
+	}
+
+	delete(tasks, task.ID)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 }
 
 func main() {
