@@ -1,13 +1,19 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
+	"sort"
 
 	"github.com/go-chi/chi/v5"
+)
+
+// Текст ошибок
+const (
+	ErrorMessageBadRequest          = "Bad Request"
+	ErrorMessageInternalServerError = "Internal Server Error"
+	ErrorMessageTaskNotFound        = "Task Not Found"
 )
 
 // Task представляет собой структуру для описания задачи
@@ -50,12 +56,24 @@ var tasks = map[string]Task{
 // r - объект http.Request, который содержит информацию о запросе клиента
 func getTasks(w http.ResponseWriter, r *http.Request) {
 
-	// Преобразуем список задач в формат JSON.
-	out, err := json.Marshal(&tasks)
+	// Создаем слайс для хранения задач
+	var taskList []Task
 
+	// Передаём значения мапы tasks в слайс
+	for _, task := range tasks {
+		taskList = append(taskList, task)
+	}
+
+	// Сортируем задачи по их ID
+	sort.Slice(taskList, func(i, j int) bool {
+		return taskList[i].ID < taskList[j].ID
+	})
+
+	// Преобразуем список задач в формат JSON.
+	out, err := json.Marshal(taskList)
 	if err != nil {
-		// Если произошла ошибка при маршализации JSON, отправляем клиенту ответ с кодом статуса 500
-		http.Error(w, "Ошибка при маршализации JSON", http.StatusInternalServerError)
+		fmt.Printf("Ошибка при маршализации JSON: %s\n", err.Error())
+		http.Error(w, ErrorMessageInternalServerError, http.StatusInternalServerError)
 		return
 	}
 
@@ -69,8 +87,8 @@ func getTasks(w http.ResponseWriter, r *http.Request) {
 	_, err = w.Write(out)
 
 	if err != nil {
-		// Если произошла ошибка при отправке JSON, отправляем клиенту ответ с кодом статуса 500
-		http.Error(w, "Ошибка при отправке JSON", http.StatusInternalServerError)
+		fmt.Printf("Ошибка при отправке JSON: %s\n", err.Error())
+		http.Error(w, ErrorMessageInternalServerError, http.StatusInternalServerError)
 		return
 	}
 }
@@ -81,31 +99,26 @@ func getTasks(w http.ResponseWriter, r *http.Request) {
 //
 // r - объект http.Request, который содержит информацию о запросе клиента
 func postTask(w http.ResponseWriter, r *http.Request) {
+
 	// Инициализируем переменную для хранения новой задачи.
 	var task Task
 
-	// Создаем буфер для чтения тела запроса.
-	var buf bytes.Buffer
-
-	// Читаем тело запроса в буфер.
-	_, err := buf.ReadFrom(r.Body)
-	if err != nil {
-		// Если произошла ошибка при чтении тела запроса, отправляем клиенту ответ с кодом статуса 400 Bad Request.
-		http.Error(w, "Ошибка при чтении тела запроса", http.StatusBadRequest)
+	// Декодируем JSON из тела запроса непосредственно в структуру Task
+	if err := json.NewDecoder(r.Body).Decode(&task); err != nil {
+		http.Error(w, ErrorMessageBadRequest, http.StatusBadRequest)
+		return
+	}
+	if task.ID == "" {
+		http.Error(w, "Задача с пустым ID", http.StatusBadRequest)
+		return
+	}
+	// Проверяем, существует ли задача с таким же ID
+	if _, exists := tasks[task.ID]; exists {
+		http.Error(w, "Задача с таким ID уже существует", http.StatusBadRequest)
 		return
 	}
 
-	// Распаковываем JSON данные из буфера
-	if err = json.Unmarshal(buf.Bytes(), &task); err != nil {
-		// Если произошла ошибка при маршализации JSON, отправляем клиенту ответ с кодом статуса 400 Bad Request.
-		http.Error(w, "Ошибка при маршализации JSON", http.StatusBadRequest)
-		return
-	}
-
-	// Создаём новый уникальный идентификатор для задачи.
-	count := len(tasks) + 1
-	// Добавляем задачу в мапу tasks с использованием уникального идентификатора.
-	tasks[strconv.Itoa(count)] = task
+	tasks[task.ID] = task
 
 	// Отправляем клиенту статус 201 Created
 	w.WriteHeader(http.StatusCreated)
@@ -121,16 +134,15 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 
 	task, ok := tasks[id]
 	if !ok {
-		http.Error(w, "Задача не найдена", http.StatusBadRequest)
+		http.Error(w, ErrorMessageTaskNotFound, http.StatusBadRequest)
 		return
 	}
 
 	// Преобразуем список задач в формат JSON.
 	out, err := json.Marshal(task)
-
 	if err != nil {
-		// Если произошла ошибка при маршализации JSON, отправляем клиенту ответ с кодом статуса 500
-		http.Error(w, "Ошибка при маршализации JSON", http.StatusInternalServerError)
+		fmt.Printf("Ошибка при маршализации JSON: %s\n", err.Error())
+		http.Error(w, ErrorMessageInternalServerError, http.StatusInternalServerError)
 		return
 	}
 
@@ -142,10 +154,9 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 
 	// Отправляем данные в формате JSON клиенту.
 	_, err = w.Write(out)
-
 	if err != nil {
-		// Если произошла ошибка при отправке JSON, отправляем клиенту ответ с кодом статуса 500
-		http.Error(w, "Ошибка при отправке JSON", http.StatusInternalServerError)
+		fmt.Printf("Ошибка при отправке JSON: %s\n", err.Error())
+		http.Error(w, ErrorMessageInternalServerError, http.StatusInternalServerError)
 		return
 	}
 }
@@ -162,8 +173,7 @@ func deleteTask(w http.ResponseWriter, r *http.Request) {
 	// Проверяем, существует ли задача с указанным идентификатором в списке задач.
 	_, ok := tasks[id]
 	if !ok {
-		// Если задачи с указанным идентификатором нет, возвращаем статус 400 Bad Request с сообщением об ошибке.
-		http.Error(w, "Ошибка: Такой задачи нет в списке", http.StatusBadRequest)
+		http.Error(w, ErrorMessageTaskNotFound, http.StatusBadRequest)
 		return
 	}
 
