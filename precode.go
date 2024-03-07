@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -66,7 +67,9 @@ func getTasks(w http.ResponseWriter, r *http.Request) {
 
 	// Сортируем задачи по их ID
 	sort.Slice(taskList, func(i, j int) bool {
-		return taskList[i].ID < taskList[j].ID
+		id1, _ := strconv.Atoi(taskList[i].ID)
+		id2, _ := strconv.Atoi(taskList[j].ID)
+		return id1 < id2
 	})
 
 	// Преобразуем список задач в формат JSON.
