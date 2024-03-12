@@ -1,14 +1,13 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 )
 
+// Task ...
 type Task struct {
 	ID           string   `json:"id"`
 	Description  string   `json:"description"`
@@ -40,82 +39,15 @@ var tasks = map[string]Task{
 	},
 }
 
-func getTask(w http.ResponseWriter, r *http.Request) {
-	resp, err := json.Marshal(tasks)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("500 Internal Server Error"))
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("200 - OK"))
-	w.Write(resp)
-}
-
-func getTaskId(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
-	task, ok := tasks[id]
-	if !ok {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("400 Bad Request"))
-		return
-	}
-	resp, err := json.Marshal(task)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("400 Bad Request"))
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("200 - OK"))
-	w.Write(resp)
-}
-
-func postTask(w http.ResponseWriter, r *http.Request) {
-	var task Task
-	var buf bytes.Buffer
-	_, err := buf.ReadFrom(r.Body)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	if err = json.Unmarshal(buf.Bytes(), &task); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("400 Bad Request"))
-		return
-	}
-	tasks[task.ID] = task
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("201 Created"))
-}
-
-func delTaskId(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
-	_, ok := tasks[id]
-	if !ok {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("400 Bad Request"))
-		return
-	}
-	delete(tasks, id)
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("200 OK"))
-}
+// Ниже напишите обработчики для каждого эндпоинта
+// ...
 
 func main() {
 	r := chi.NewRouter()
-	// получение всех задач
-	r.Get("/tasks", getTask)
-	// добавление задачи
-	r.Post("/tasks", postTask)
-	// получение задачи по id
-	r.Get("/tasks/{id}", getTaskId)
-	// удаление задачи по id
-	r.Delete("/tasks/{id}", delTaskId)
+
+	// здесь регистрируйте ваши обработчики
+	// ...
+
 	if err := http.ListenAndServe(":8080", r); err != nil {
 		fmt.Printf("Ошибка при запуске сервера: %s", err.Error())
 		return
