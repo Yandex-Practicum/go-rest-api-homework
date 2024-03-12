@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -40,15 +41,38 @@ var tasks = map[string]Task{
 }
 
 // Ниже напишите обработчики для каждого эндпоинта
-// ...
+func handleGetTasks(res http.ResponseWriter, req *http.Reques) {
+	tasks, err := json.Marshal(tasks)
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	res.Header().Set("Content-Type", "application/json")
+	res.WriteHeader(http.StatusOK)
+	res.Write(tasks)
+}
+
+func handlePostTasks(res http.ResponseWriter, req *http.Reques) {
+
+}
+
+func handleGetTask(res http.ResponseWriter, req *http.Reques) {
+
+}
+
+func handleDeleteTask(res http.ResponseWriter, req *http.Reques) {
+
+}
 
 func main() {
 	r := chi.NewRouter()
 
 	// здесь регистрируйте ваши обработчики
-	// ...
+	r.Get("/tasks", handleGetTasks)
+	r.Post("/tasks", handlePostTasks)
 
-	if err := http.ListenAndServe(":8080", r); err != nil {
+	if err := http.ListenAndServe(":8089", r); err != nil {
 		fmt.Printf("Ошибка при запуске сервера: %s", err.Error())
 		return
 	}
