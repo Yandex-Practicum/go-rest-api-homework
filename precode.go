@@ -48,8 +48,7 @@ var tasks = map[string]Task{
 func getTasks(w http.ResponseWriter, _ *http.Request) {
 	response, err := json.Marshal(tasks)
 	if err != nil {
-		fmt.Printf("filed to marshal response: %v", err)
-		log.Println(err)
+		log.Printf("filed to marshal response: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -58,8 +57,7 @@ func getTasks(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(response)
 	if err != nil {
-		fmt.Printf("filed to write response: %v", err)
-		log.Println(err)
+		log.Printf("filed to write response: %v", err)
 	}
 }
 
@@ -69,16 +67,14 @@ func postTask(w http.ResponseWriter, r *http.Request) {
 
 	_, err := buf.ReadFrom(r.Body)
 	if err != nil {
-		fmt.Printf("filed to read buffer: %v", err)
-		log.Println(err)
+		log.Printf("filed to read buffer: %v", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	err = json.Unmarshal(buf.Bytes(), &task)
 	if err != nil {
-		fmt.Printf("filed to unmarshal: %v", err)
-		log.Println(err)
+		log.Printf("filed to unmarshal: %v", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -102,8 +98,7 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 
 	response, err := json.Marshal(task)
 	if err != nil {
-		fmt.Printf("filed to marshal response: %v", err)
-		log.Println(err)
+		log.Printf("filed to marshal response: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
