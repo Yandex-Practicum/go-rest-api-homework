@@ -1,4 +1,4 @@
-module github.com/Yandex-Practicum/go-rest-api-homework
+module github.com/Yandex-Practicum/go-sprint-six-rest-api-homework
 
 go 1.20
 
