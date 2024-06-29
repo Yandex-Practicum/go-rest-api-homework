@@ -1,0 +1,1 @@
+curl http://localhost:8080/tasks --include --header "Content-Type: application/json" --request "POST" --data '{"id": "3","Description": "Протестировать финальное задание с помощью Postmen", "Note": "Лучше это делать в процессе разработки, каждый раз, когда запускаешь сервер и проверяешь хендлер", "Applications": ["VS Code","Terminal","git","Postman"]}'
