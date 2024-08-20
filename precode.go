@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -39,14 +41,73 @@ var tasks = map[string]Task{
 	},
 }
 
-// Ниже напишите обработчики для каждого эндпоинта
-// ...
+// Обработчик выдающий все задачи
+func getTask(w http.ResponseWriter, r *http.Request) {
+	resp, err := json.Marshal(tasks)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest) //Ошибка 400 bad request
+		return                                            //завершаем в случае ошибки
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK) //Статус 200 ОК
+	w.Write(resp)
+}
+
+// Обработчик выдающий задачу по ID
+func getTaskID(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	task, ok := tasks[id]
+	if !ok {
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest) //400 bad request
+		return                                                                       //завершаем в случае ошибки
+	}
+	resp, err := json.Marshal(task)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest) //400 bad request
+		return                                            //завершаем в случае ошибки
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK) //Status OK
+	w.Write(resp)
+}
+
+func postTask(w http.ResponseWriter, r *http.Request) {
+	var task Task
+	var buf bytes.Buffer
+	_, err := buf.ReadFrom(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest) //Ошибка 400 bad request
+		return                                            //завершаем в случае ошибки
+	}
+	err = json.Unmarshal(buf.Bytes(), &task)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return //завершаем в случае ошибки
+	}
+	tasks[task.ID] = task
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK) //Статус ОК (как требуется в задании, так то я бы написал http.StatusCreated)
+}
+
+// обработчик удаляющий задачу по id
+func deleteTask(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	_, ok := tasks[id]
+	if !ok {
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest) //400 bad request
+		return                                                                       //завершаем
+	}
+	delete(tasks, id)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK) //Статус 200 ОК
+}
 
 func main() {
-	r := chi.NewRouter()
-
-	// здесь регистрируйте ваши обработчики
-	// ...
+	r := chi.NewRouter()                //роутер
+	r.Get("/tasks", getTask)            //Подключаем получение всех задач
+	r.Post("/tasks", postTask)          //Подключаем обработчик отправки задачи на сервер
+	r.Get("/tasks/{id}", getTaskID)     //Подключаем обработчик получения задачи по ID
+	r.Delete("/tasks/{id}", deleteTask) //Подключаем обработчик удаления задачи по ID
 
 	if err := http.ListenAndServe(":8080", r); err != nil {
 		fmt.Printf("Ошибка при запуске сервера: %s", err.Error())
