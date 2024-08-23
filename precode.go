@@ -51,7 +51,7 @@ func getTasks(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(resp)
+	_, _ = w.Write(resp)
 }
 
 func getTask(w http.ResponseWriter, r *http.Request) {
@@ -61,6 +61,7 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 
 	if !exist {
 		http.Error(w, "Task is not found", http.StatusBadRequest)
+		return
 	}
 
 	resp, err := json.Marshal(task)
@@ -71,8 +72,7 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(resp)
-
+	_, _ = w.Write(resp)
 }
 
 func postTask(w http.ResponseWriter, r *http.Request) {
@@ -90,10 +90,12 @@ func postTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tasks[task.ID] = task
+	if _, exist := tasks[task.ID]; exist {
+		http.Error(w, "Task with this ID already exists", http.StatusBadRequest)
+		return
+	}
 
-	// тут я бы добавил цикл, который увеличивает последующие ключи после
-	// добавленного элементы карты, но стоит ли?
+	tasks[task.ID] = task
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
@@ -108,19 +110,6 @@ func deleteTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	delete(tasks, id)
-
-	// в этом месте я бы добавил алгоритм для изменения id
-	// у всех последующих задач в карте,
-	// но это очень неоптимизированный процесс, который скорее
-	// просто засорит код из-за постоянной проверки ошибки
-	// при конвертации ключа типа string из карты в int
-	// и увеличит нагрузку на железо постоянным удалением
-	// элемента карты по ключу (которых может быть огромное количество)
-	// и созданием нового элемента карты с ключом, на единицу меньшим
-	// чем свой же предыдущий вариант
-	// да и заданием не оговорено
-	// если есть классное решение для таких входных параметров, как здесь -
-	// было бы интересно почитать
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
