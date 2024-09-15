@@ -49,6 +49,7 @@ func getTasks(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "500 Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+	
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(resp)
@@ -68,7 +69,6 @@ func postArtist(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
 	tasks[task.ID] = task
 
 	w.Header().Set("Content-Type", "application/json")
@@ -119,7 +119,6 @@ func main() {
 	r.Get("/tasks", getTasks)
 	r.Get("/task/{id}", getTask)
 	r.Post("/tasks", postArtist)
-
 	r.Delete("/task/{id}", deleteTask)
 
 	if err := http.ListenAndServe(":8080", r); err != nil {
