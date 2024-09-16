@@ -41,7 +41,7 @@ var tasks = map[string]Task{
 	},
 }
 
-// Ниже напишите обработчики для каждого эндпоинта
+// Ниже напишите обработчики для каждого эндпоинта:
 
 // Обработчик для получения всех задач:
 func getAllTasks(w http.ResponseWriter, r *http.Request) {
