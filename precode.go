@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -40,13 +41,70 @@ var tasks = map[string]Task{
 }
 
 // Ниже напишите обработчики для каждого эндпоинта
-// ...
+// getTask возвращает все задачи
+func getTask(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(tasks); err != nil {
+		http.Error(w, "Ошибка", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
+// postTask создает новую запись
+func postTask(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	var newTask Task
+	if err := json.NewDecoder(r.Body).Decode(&newTask); err != nil {
+		http.Error(w, "Ошибка", http.StatusBadRequest)
+		return
+	}
+	tasks[newTask.ID] = newTask
+	w.WriteHeader(http.StatusCreated)
+}
+
+// getTaskID добавляет задачу по ID
+func getTaskID(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	id := chi.URLParam(r, "id")
+	task, ok := tasks[id]
+
+	if !ok {
+		http.Error(w, "Ошибка", http.StatusBadRequest)
+		return
+	}
+	if err := json.NewEncoder(w).Encode(task); err != nil {
+		http.Error(w, "Ошибка", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
+// deleteTaskID удаляет задачу по ID
+func deleteTaskID(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	id := chi.URLParam(r, "id")
+
+	if _, ok := tasks[id]; !ok {
+		http.Error(w, "Ошибка", http.StatusBadRequest)
+		return
+	}
+	delete(tasks, id)
+	w.WriteHeader(http.StatusOK)
+}
 
 func main() {
 	r := chi.NewRouter()
 
 	// здесь регистрируйте ваши обработчики
 	// ...
+	r.Get("/tasks", getTask)              // получение всех задач
+	r.Post("/tasks", postTask)            // Создание новых задач
+	r.Get("/tasks/{id}", getTaskID)       // Получение задач по ID
+	r.Delete("/tasks/{id}", deleteTaskID) // Удаление задачи по ID
 
 	if err := http.ListenAndServe(":8080", r); err != nil {
 		fmt.Printf("Ошибка при запуске сервера: %s", err.Error())
