@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -41,12 +43,91 @@ var tasks = map[string]Task{
 
 // Ниже напишите обработчики для каждого эндпоинта
 // ...
+func getTasks(w http.ResponseWriter, r *http.Request) {
+	// сериализуем данные
+	resp, err := json.Marshal(tasks)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// в заголовок записываем тип контента, у нас это данные в формате JSON
+	w.Header().Set("Content-Type", "application/json")
+	// так как все успешно, то статус OK
+	w.WriteHeader(http.StatusOK)
+	// записываем сериализованные в JSON данные в тело ответа
+	w.Write(resp)
+}
+
+func postTask(w http.ResponseWriter, r *http.Request) {
+	var task Task
+	var buf bytes.Buffer
+	//читаю тело запроса
+	_, err := buf.ReadFrom(r.Body)
+	//проверяю тело на зопленность
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	//десериализую json и записываю в переменную task
+	if err = json.Unmarshal(buf.Bytes(), &task); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	//добавляю новую задачу в мапу
+	tasks[task.ID] = task
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+}
+
+func getTaskId(w http.ResponseWriter, r *http.Request) {
+	//читаю id в запросе
+	id := chi.URLParam(r, "id")
+	//проверяю есть ли задача с таким id
+	task, ok := tasks[id]
+	if !ok {
+		http.Error(w, "Задача не найдена", http.StatusBadRequest)
+		return
+	}
+
+	resp, err := json.Marshal(task)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(resp)
+}
+
+func deleteId(w http.ResponseWriter, r *http.Request) {
+	//читаю id в запросе
+	id := chi.URLParam(r, "id")
+	//проверяю есть ли задача с таким id
+	_, ok := tasks[id]
+	if !ok {
+		http.Error(w, "Задача не найдена", http.StatusBadRequest)
+		return
+	}
+	//удаляю из мапы задачу пришедшим id
+	delete(tasks, id)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+}
 
 func main() {
 	r := chi.NewRouter()
 
 	// здесь регистрируйте ваши обработчики
 	// ...
+	r.Get("/tasks", getTasks)
+	r.Post("/tasks", postTask)
+	r.Get("/tasks/{id}", getTaskId)
+	r.Delete("/tasks/{id}", deleteId)
 
 	if err := http.ListenAndServe(":8080", r); err != nil {
 		fmt.Printf("Ошибка при запуске сервера: %s", err.Error())
