@@ -122,7 +122,6 @@ func delTask(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	r := chi.NewRouter()
-
 	// здесь регистрируйте ваши обработчики
 	// регистрируем в роутере эндпоинт `/tasks` с методом GET, для которого используется обработчик `getTasks`
 	r.Get("/tasks", getTasks)
