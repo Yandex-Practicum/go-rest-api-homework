@@ -42,7 +42,7 @@ var tasks = map[string]Task{
 }
 
 // Ниже напишите обработчики для каждого эндпоинта
-// ...
+// ... ok
 // обработчик для вывода списка всех задач
 func getTasks(w http.ResponseWriter, r *http.Request) {
 	// сериализвуем данные из слайса task
